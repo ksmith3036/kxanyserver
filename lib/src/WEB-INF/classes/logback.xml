@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+	<property name="LOG_PATH" value="${kxany.logpath}" scope="CONTEXT" />
+
+	<appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_PATH}/kxany.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${LOG_PATH}/kxany-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<!-- or whenever the file size reaches 10MB -->
+				<maxFileSize>10MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>[KX] / [%d] / [%5p] / [{%t} %c{36}#%M:%L] / %replace(%m){'[\r\n]+', ' *linebreak* '}%n</pattern>
+			<!-- <pattern>%msg%n</pattern> -->
+		</encoder>
+	</appender>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+		<encoder>
+			<Pattern>[KX] / [%d] / [%5p] / [{%t} %c{36}#%M:%L] / %replace(%m){'[\r\n]+', ' *linebreak* '}%n</Pattern>
+		</encoder>
+	</appender>
+
+	<appender name="AUDIT"
+			  class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_PATH}/audit.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/audit.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>365</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>[Admin] / [%d] / [%5p] / [{%t} %c{36}#%M:%L] / %replace(%m){'[\r\n]+', ' *linebreak* '}%n</pattern>
+		</encoder>
+	</appender>
+	
+	  <appender name="TRACKER" class="ch.qos.logback.core.FileAppender">
+	        <file>${LOG_PATH}/TrackerId.log</file>
+	        <encoder>
+	            <pattern>%d{HH:mm:ss.SSS} %msg%n</pattern>
+	        </encoder>
+    	</appender>
+
+	<logger name="org.hibernate" level="INFO" />
+	<logger name="org.springframework" level="INFO" />
+
+	<logger name="TrackerLog" level="INFO" additivity="false">
+		<appender-ref ref="TRACKER" />
+    	</logger>
+
+	<root level="DEBUG">
+		<appender-ref ref="ROLLING" />
+		<!-- <appender-ref ref="STDOUT" /> -->
+	</root>
+
+</configuration>

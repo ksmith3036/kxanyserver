@@ -1,0 +1,115 @@
+import proguard.gradle.ProGuardTask
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.guardsquare:proguard-gradle:7.8.1'
+    }
+}
+
+plugins {
+    // Apply the java-library plugin for API and implementation separation.
+    id 'java-library'
+    id 'war' // Apply the War plugin for web applications
+}
+
+apply plugin: 'java'
+apply plugin:'war'
+
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" // << "-Xlint:deprecation"
+        }
+    }
+}
+dependencies {
+    providedCompile 'org.apache.tomcat:tomcat-catalina:10.1.50'
+    // For the Servlet API (Tomcat 10 implements Servlet 6.0)
+    //providedRuntime 'javax.servlet:javax.servlet-api:4.0.1'
+    //compileOnly 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    // Or, if using Jakarta EE 9+ (Tomcat 10+), you would use:
+    providedRuntime 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.83'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.83'
+    implementation 'org.json:json:20250517'
+//    implementation 'org.springframework:spring-context:5.1.20.RELEASE'
+//    implementation 'org.springframework:spring-test:5.1.20.RELEASE'
+//    implementation 'org.springframework:spring-web:5.1.20.RELEASE'
+//    implementation 'org.springframework.data:spring-data-jpa:2.1.21.RELEASE'
+//    //implementation 'org.springframework:spring-context-support:5.1.20.RELEASE'
+    implementation 'commons-codec:commons-codec:1.16.1'
+    implementation 'org.apache.commons:commons-lang3:3.20.0'
+//    implementation 'jakarta.persistence:jakarta.persistence-api:2.2.3'
+    //implementation 'com.google.code.gson:gson:2.13.2'
+    implementation 'ch.qos.logback:logback-core:1.5.21'
+    implementation 'ch.qos.logback:logback-classic:1.5.21'
+
+    //implementation 'javax.servlet:jstl:1.2'
+
+    // Use JUnit Jupiter for testing.
+    testImplementation libs.junit.jupiter
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // This dependency is exported to consumers, that is to say found on their compile classpath.
+    api libs.commons.math3
+
+    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
+    implementation libs.guava
+
+}
+
+//def outputJar = "${buildDir}/libs/${rootProject.name}.jar"
+def outputJar = "${buildDir}/libs/lib.jar"
+
+// Apply a specific Java toolchain to ease working on different environments.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+
+tasks.named('test') {
+    // Use JUnit Platform for unit tests.
+    useJUnitPlatform()
+}
+
+// For building a WAR file
+war {
+//    archiveFileName = "${project.name}.war"
+    archiveFileName = "ROOT.war"
+    from('src/WEB-INF/classes') {
+        include 'kx.properties'
+        into('WEB-INF/classes')
+    }
+//    webInf { from 'src/additionalWebInf' } // adds a file-set to the WEB-INF dir.
+    webXml = file('src/WEB-INF/web.xml')
+}
+
+task myProguardTask(type: ProGuardTask) {
+    println("Performing obfuscation..")
+    configuration 'proguard.conf'
+//    injars "${outputJar}"
+    injars "build/libs/lib.jar"
+    //System.out.println("inJars = " + injars.toString());
+//    outjars "${buildDir}/libs/${rootProject.name}_proguard.jar"
+
+    //libraryjars "${System.getProperty('java.home')}/lib/rt.jar"
+    //libraryjars "${dependsDir}"
+    outjars "${buildDir}/libs/lib_proguard.jar"
+    //System.out.println("outJars = " + outjars);
+
+}
